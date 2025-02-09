@@ -32,23 +32,24 @@ def define_cards():
     return user_cards, machine_cards, table_cards
 
 
-def show_cards(user_cards, table_cards, round_number, turn):
+def show_cards(user_cards, table_cards, turn, round_number=None, machine_cards=None):
     print("♥ ♣ TEXAS HOLDEM ♦ ♠\n")
 
     print(f"{turn}\n")
 
-    print("Cartas de la máquina:      [¿?][¿?]\n")
-
-    if round_number == 0:
+    if turn != "Fin de la mano":
+        print("Cartas de la máquina:      [¿?][¿?]\n")
+    else:
         print(
-            f"Cartas en mesa:      {table_cards[0]}{table_cards[1]}[¿?][¿?][¿?]\n")
-    elif round_number == 1:
+            f"Cartas de la máquina:      {machine_cards[0]}{machine_cards[1]}\n")
+
+    if round_number == 0 and turn != "Fin de la mano":
         print(
             f"Cartas en mesa:      {table_cards[0]}{table_cards[1]}{table_cards[2]}[¿?][¿?]\n")
-    elif round_number == 2:
+    elif round_number == 1 and turn != "Fin de la mano":
         print(
             f"Cartas en mesa:      {table_cards[0]}{table_cards[1]}{table_cards[2]}{table_cards[3]}[¿?]\n")
-    elif round_number == 3:
+    elif round_number in (2, 3) or turn == "Fin de la mano":
         print(
             f"Cartas en mesa:      {table_cards[0]}{table_cards[1]}{table_cards[2]}{table_cards[3]}{table_cards[4]}\n")
 
@@ -57,7 +58,7 @@ def show_cards(user_cards, table_cards, round_number, turn):
 
 def machine_play(user_cards, table_cards, round_number):
 
-    show_cards(user_cards, table_cards, round_number, "Máquina")
+    show_cards(user_cards, table_cards, "Máquina", round_number)
     input("\nENTER para continuar...")
     system("cls")
 
@@ -70,9 +71,8 @@ def machine_play(user_cards, table_cards, round_number):
 
 def player_play(user_cards, table_cards, round_number):
 
-    show_cards(user_cards, table_cards, round_number, "Jugador")
+    show_cards(user_cards, table_cards, "Jugador", round_number)
 
-    bet = None
     if input("\n¿Desea seguir jugando? [Y/N]: ").lower() == "y":
         bet = True
     else:
@@ -82,27 +82,42 @@ def player_play(user_cards, table_cards, round_number):
     return bet
 
 
-def game(user_cards, table_cards):
+def game(user_cards, machine_cards, table_cards):
     system("cls")
     round_number = 0
 
     while not round_number == 3:
 
-        machine_bet = machine_play(user_cards, table_cards, round_number)
+        machine_bet = machine_play(
+            user_cards, table_cards, round_number)
         if not machine_bet:
             break
 
-        player_bet = player_play(user_cards, table_cards, round_number)
+        player_bet = player_play(
+            user_cards, table_cards, round_number)
         if not player_bet:
             break
 
         round_number += 1
 
+    if not machine_bet:
+        show_cards(user_cards, table_cards, "Fin de la mano", round_number=round_number,
+                   machine_cards=machine_cards)
+        print("\nLa máquina se ha retirado. ¡Ganaste la mano!")
+    elif not player_bet:
+        show_cards(user_cards, table_cards, "Fin de la mano", round_number=round_number,
+                   machine_cards=machine_cards)
+        print("\nTe has retidado, perdiste la mano")
+    elif round_number == 3:
+        show_cards(user_cards, table_cards, "Fin de la mano", round_number=round_number,
+                   machine_cards=machine_cards)
+        print("\nPROXIMAMENTE...")  # Definir forma de calcular el ganador
+
 
 def main():
     user_cards, machine_cards, table_cards = define_cards()
 
-    game(user_cards, table_cards)
+    game(user_cards, machine_cards, table_cards)
 
 
 if __name__ == "__main__":
