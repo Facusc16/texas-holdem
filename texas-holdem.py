@@ -2,13 +2,16 @@ import random
 from os import system
 
 # Crear lista de maso de cartas
-maso = ["[A♠]", "[2♠]", "[3♠]", "[4♠]", "[5♠]", "[6♠]", "[7♠]", "[8♠]", "[9♠]", "[10♠]", "[J♠]", "[Q♠]", "[K♠]",
-        "[A♣]", "[2♣]", "[3♣]", "[4♣]", "[5♣]", "[6♣]", "[7♣]", "[8♣]", "[9♣]", "[10♣]", "[J♣]", "[Q♣]", "[K♣]",
-        "[A♥]", "[2♥]", "[3♥]", "[4♥]", "[5♥]", "[6♥]", "[7♥]", "[8♥]", "[9♥]", "[10♥]", "[J♥]", "[Q♥]", "[K♥]",
-        "[A♦]", "[2♦]", "[3♦]", "[4♦]", "[5♦]", "[6♦]", "[7♦]", "[8♦]", "[9♦]", "[10♦]", "[J♦]", "[Q♦]", "[K♦]"]
+maso = ["[A♠]", "[2♠]", "[3♠]", "[4♠]", "[5♠]", "[6♠]", "[7♠]", "[8♠]", "[9♠]", "[10♠]", "[J♠]",
+        "[Q♠]", "[K♠]", "[A♣]", "[2♣]", "[3♣]", "[4♣]", "[5♣]", "[6♣]", "[7♣]", "[8♣]", "[9♣]",
+        "[10♣]", "[J♣]", "[Q♣]", "[K♣]", "[A♥]", "[2♥]", "[3♥]", "[4♥]", "[5♥]", "[6♥]", "[7♥]",
+        "[8♥]", "[9♥]", "[10♥]", "[J♥]", "[Q♥]", "[K♥]", "[A♦]", "[2♦]", "[3♦]", "[4♦]", "[5♦]",
+        "[6♦]", "[7♦]", "[8♦]", "[9♦]", "[10♦]", "[J♦]", "[Q♦]", "[K♦]"]
 
 
 def define_cards():
+    """Asigna cartas al jugador, a la máquina y a la mesa"""
+
     chosen_cards = []
     user_cards = []
     machine_cards = []
@@ -33,30 +36,35 @@ def define_cards():
 
 
 def show_cards(user_cards, table_cards, turn, round_number=None, machine_cards=None):
+    """Muestras las cartas, según las situación unas u otras"""
+
     print("♥ ♣ TEXAS HOLDEM ♦ ♠\n")
 
     print(f"{turn}\n")
 
+    # Imprime las cartas de la máquina
     if turn != "Fin de la mano":
         print("Cartas de la máquina:      [¿?][¿?]\n")
     else:
         print(
-            f"Cartas de la máquina:      {machine_cards[0]}{machine_cards[1]}\n")
+            f"Cartas de la máquina:      {"".join(machine_cards)}\n")
 
+    # Imprime las cartas de la mesa
     if round_number == 0 and turn != "Fin de la mano":
-        print(
-            f"Cartas en mesa:      {table_cards[0]}{table_cards[1]}{table_cards[2]}[¿?][¿?]\n")
-    elif round_number == 1 and turn != "Fin de la mano":
-        print(
-            f"Cartas en mesa:      {table_cards[0]}{table_cards[1]}{table_cards[2]}{table_cards[3]}[¿?]\n")
-    elif round_number in (2, 3) or turn == "Fin de la mano":
-        print(
-            f"Cartas en mesa:      {table_cards[0]}{table_cards[1]}{table_cards[2]}{table_cards[3]}{table_cards[4]}\n")
+        print(f"Cartas en mesa:      {"".join(table_cards[:3])}[¿?][¿?]\n")
 
-    print(f"Tus cartas:                {user_cards[0]}{user_cards[1]}")
+    elif round_number == 1 and turn != "Fin de la mano":
+        print(f"Cartas en mesa:      {"".join(table_cards[:4])}[¿?]\n")
+
+    elif round_number in (2, 3) or turn == "Fin de la mano":
+        print(f"Cartas en mesa:      {"".join(table_cards)}\n")
+
+    # Imprime las cartas del jugador
+    print(f"Tus cartas:                {"".join(user_cards)}")
 
 
 def machine_play(user_cards, table_cards, round_number):
+    """Controla el turno de la máquina"""
 
     show_cards(user_cards, table_cards, "Máquina", round_number)
     input("\nENTER para continuar...")
@@ -70,6 +78,7 @@ def machine_play(user_cards, table_cards, round_number):
 
 
 def player_play(user_cards, table_cards, round_number):
+    """Controla el turno del jugador"""
 
     show_cards(user_cards, table_cards, "Jugador", round_number)
 
@@ -83,10 +92,12 @@ def player_play(user_cards, table_cards, round_number):
 
 
 def game(user_cards, machine_cards, table_cards):
+    """Ejecuta el juego"""
+
     system("cls")
     round_number = 0
 
-    while not round_number == 3:
+    while round_number != 3:
 
         machine_bet = machine_play(
             user_cards, table_cards, round_number)
@@ -115,6 +126,8 @@ def game(user_cards, machine_cards, table_cards):
 
 
 def main():
+    """Ejecuta el programa entero"""
+
     user_cards, machine_cards, table_cards = define_cards()
 
     game(user_cards, machine_cards, table_cards)
