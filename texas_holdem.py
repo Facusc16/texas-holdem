@@ -1,3 +1,5 @@
+"""Módulo para simular partida de Texas Holdem"""
+
 import random
 from os import system
 
