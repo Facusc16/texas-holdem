@@ -4,15 +4,15 @@ import random
 from os import system
 
 # Crear lista de maso de cartas
-maso = ["[A♠]", "[2♠]", "[3♠]", "[4♠]", "[5♠]", "[6♠]", "[7♠]", "[8♠]", "[9♠]", "[10♠]", "[J♠]",
-        "[Q♠]", "[K♠]", "[A♣]", "[2♣]", "[3♣]", "[4♣]", "[5♣]", "[6♣]", "[7♣]", "[8♣]", "[9♣]",
-        "[10♣]", "[J♣]", "[Q♣]", "[K♣]", "[A♥]", "[2♥]", "[3♥]", "[4♥]", "[5♥]", "[6♥]", "[7♥]",
-        "[8♥]", "[9♥]", "[10♥]", "[J♥]", "[Q♥]", "[K♥]", "[A♦]", "[2♦]", "[3♦]", "[4♦]", "[5♦]",
-        "[6♦]", "[7♦]", "[8♦]", "[9♦]", "[10♦]", "[J♦]", "[Q♦]", "[K♦]"]
+deck = []
+for value in "A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2":
+    for suit in "♥♦♠♣":
+        deck.append(f"[{value}{suit}]")
 
 
 def define_cards():
     """Asigna cartas al jugador, a la máquina y a la mesa"""
+    shuffled_deck = random.sample(deck, len(deck))
 
     chosen_cards = []
     user_cards = []
@@ -20,7 +20,7 @@ def define_cards():
     table_cards = []
 
     while len(chosen_cards) < 9:
-        card = random.choice(maso)
+        card = random.choice(shuffled_deck)
 
         if card not in chosen_cards:
             chosen_cards.append(card)
