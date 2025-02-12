@@ -66,6 +66,8 @@ def show_cards(user_cards, table_cards, turn, round_number=None, machine_cards=N
 
 
 def sort_hand(hole_cards, community_cards, priority=None):
+    """Devuelve la mano ordenada"""
+
     hand = hole_cards + community_cards
 
     if priority == "highest":
@@ -89,7 +91,7 @@ def sort_hand(hole_cards, community_cards, priority=None):
             elif "♣" in card:
                 sorted_hand[3].append(card)
 
-        for suit in sorted_hand:
+        for suit in sorted_hand:  # pylint: disable=redefined-outer-name
             for i, card in enumerate(suit):
                 index = deck.index(card)
                 suit[i] = (card, index)
@@ -139,6 +141,8 @@ def sort_hand(hole_cards, community_cards, priority=None):
 
 
 def calculate_combination(hand):
+    """Devuelve la combinación más alta formada"""
+
     combination = None
 
     if [x[0] for x in hand[:5]] in [
