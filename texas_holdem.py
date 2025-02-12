@@ -65,6 +65,89 @@ def show_cards(user_cards, table_cards, turn, round_number=None, machine_cards=N
     print(f"Tus cartas:                {"".join(user_cards)}")
 
 
+def sort_hand(hole_cards, community_cards, priority=None):
+    hand = hole_cards + community_cards
+
+    if priority == "highest":
+        sorted_hand = []
+
+        for card in hand:
+            index = deck.index(card)
+            sorted_hand.append((card, index))
+        sorted_hand.sort(key=lambda x: x[1])
+
+    elif priority == "suit":
+        sorted_hand = [[], [], [], []]
+
+        for card in hand:
+            if "♥" in card:
+                sorted_hand[0].append(card)
+            elif "♦" in card:
+                sorted_hand[1].append(card)
+            elif "♠" in card:
+                sorted_hand[2].append(card)
+            elif "♣" in card:
+                sorted_hand[3].append(card)
+
+        for suit in sorted_hand:
+            for i, card in enumerate(suit):
+                index = deck.index(card)
+                suit[i] = (card, index)
+            suit.sort(key=lambda x: x[1])
+
+        sorted_hand.sort(key=len, reverse=True)
+
+        sorted_hand = sorted_hand[0] + sorted_hand[1] + \
+            sorted_hand[2] + sorted_hand[3]
+
+    elif priority == "value":
+        sorted_hand = [[], [], [], [], [], [], [], [], [], [], [], [], []]
+
+        for card in hand:
+            if "A" in card:
+                sorted_hand[0].append(card)
+            elif "K" in card:
+                sorted_hand[1].append(card)
+            elif "Q" in card:
+                sorted_hand[2].append(card)
+            elif "J" in card:
+                sorted_hand[3].append(card)
+            elif "10" in card:
+                sorted_hand[4].append(card)
+            elif "9" in card:
+                sorted_hand[5].append(card)
+            elif "8" in card:
+                sorted_hand[6].append(card)
+            elif "7" in card:
+                sorted_hand[7].append(card)
+            elif "6" in card:
+                sorted_hand[8].append(card)
+            elif "5" in card:
+                sorted_hand[9].append(card)
+            elif "4" in card:
+                sorted_hand[10].append(card)
+            elif "3" in card:
+                sorted_hand[11].append(card)
+            elif "2" in card:
+                sorted_hand[12].append(card)
+
+        sorted_hand.sort(key=len, reverse=True)
+
+        sorted_hand = sum(sorted_hand, [])
+
+    return sorted_hand
+
+
+def calculate_combination(hand):
+    combination = None
+
+    if [x[0] for x in hand[:5]] in [
+            list(f"[{value}{suit}]" for value in ["A", "K", "Q", "J", "10"]) for suit in "♥♦♠♣"]:
+        combination = "ESCALERA REAL"
+
+    print(combination)
+
+
 def machine_play(user_cards, table_cards, round_number):
     """Controla el turno de la máquina"""
 
@@ -130,9 +213,20 @@ def game(user_cards, machine_cards, table_cards):
 def main():
     """Ejecuta el programa entero"""
 
-    user_cards, machine_cards, table_cards = define_cards()
+    # Asigno cartas al jugador, a la máquina y a la mesa
+    # user_cards, machine_cards, table_cards = define_cards() # cambiar nombre de user_cards
 
-    game(user_cards, machine_cards, table_cards)
+    player_cards = ['[A♥]', '[A♣]']
+    community_cards = ['[6♦]', '[6♥]', '[K♣]', '[6♠]', '[J♥]']
+    # machine_cards = ["[2♣]", "[9♠]"]
+
+    # Ordeno la mano del jugador
+    player_hand = sort_hand(player_cards, community_cards, priority="value")
+    print(player_hand)
+
+    # calculate_combination(player_hand)
+
+    # game(user_cards, machine_cards, table_cards)
 
 
 if __name__ == "__main__":
