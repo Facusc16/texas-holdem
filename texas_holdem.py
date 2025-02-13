@@ -70,13 +70,32 @@ def sort_hand(hole_cards, community_cards, priority=None):
 
     hand = hole_cards + community_cards
 
-    if priority == "highest":
+    if "highest" in priority:
         sorted_hand = []
 
         for card in hand:
             index = deck.index(card)
             sorted_hand.append((card, index))
         sorted_hand.sort(key=lambda x: x[1])
+
+        """if "straight" in priority:
+            for i in range(len(sorted_hand)):  # pylint: disable=C0200
+                if i == 6:
+                    pass
+                elif sorted_hand[i][0][1:2] == sorted_hand[i + 1][0][1:2]:
+                    sorted_hand.append(sorted_hand[i + 1])
+                    sorted_hand.pop(i + 1)"""
+
+        if "straight" in priority:
+            i = 0
+            loop = 0
+            while loop <= 3:
+                if sorted_hand[i][0][1:2] == sorted_hand[i + 1][0][1:2]:
+                    sorted_hand.append(sorted_hand[i + 1])
+                    sorted_hand.pop(i + 1)
+                    loop += 1
+                else:
+                    i += 1
 
     elif priority == "suit":
         sorted_hand = [[], [], [], []]
@@ -99,8 +118,7 @@ def sort_hand(hole_cards, community_cards, priority=None):
 
         sorted_hand.sort(key=len, reverse=True)
 
-        sorted_hand = sorted_hand[0] + sorted_hand[1] + \
-            sorted_hand[2] + sorted_hand[3]
+        sorted_hand = sum(sorted_hand, [])
 
     elif priority == "value":
         sorted_hand = [[], [], [], [], [], [], [], [], [], [], [], [], []]
@@ -220,13 +238,16 @@ def main():
     # Asigno cartas al jugador, a la máquina y a la mesa
     # user_cards, machine_cards, table_cards = define_cards() # cambiar nombre de user_cards
 
-    player_cards = ['[A♥]', '[A♣]']
-    community_cards = ['[6♦]', '[6♥]', '[K♣]', '[6♠]', '[J♥]']
+    player_cards = ['[9♠]', '[9♦]']
+    community_cards = ['[9♥]', '[7♠]', '[8♦]', '[9♣]', '[10♥]']
     # machine_cards = ["[2♣]", "[9♠]"]
 
     # Ordeno la mano del jugador
-    player_hand = sort_hand(player_cards, community_cards, priority="value")
+    player_hand = sort_hand(player_cards, community_cards,
+                            priority="highest.straight")
     print(player_hand)
+    # print(player_hand[0][0][1:3])
+    # print(player_hand[1][0][1:2])
 
     # calculate_combination(player_hand)
 
