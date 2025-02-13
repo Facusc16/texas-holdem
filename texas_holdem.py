@@ -246,8 +246,8 @@ def main():
     # Asigno cartas al jugador, a la máquina y a la mesa
     # user_cards, machine_cards, table_cards = define_cards() # cambiar nombre de user_cards
 
-    player_cards = ['[3♠]', '[10♣]']
-    community_cards = ['[3♦]', '[3♣]', '[10♠]', '[8♠]', '[7♣]']
+    player_cards = ['[A♠]', '[7♦]']
+    community_cards = ['[A♣]', '[9♠]', '[6♠]', '[3♣]', '[2♠]']
 
     # machine_cards = ["[2♣]", "[9♠]"]
 
