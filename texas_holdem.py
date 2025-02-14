@@ -39,7 +39,7 @@ def define_cards():
     return user_cards, machine_cards, table_cards
 
 
-def show_cards(user_cards, table_cards, turn, round_number=None, machine_cards=None):
+def show_cards(user_cards, community_cards, turn, round_number=None, machine_cards=None):
     """Muestras las cartas, según las situación unas u otras"""
 
     print("♥ ♣ TEXAS HOLDEM ♦ ♠\n")
@@ -55,13 +55,13 @@ def show_cards(user_cards, table_cards, turn, round_number=None, machine_cards=N
 
     # Imprime las cartas de la mesa
     if round_number == 0 and turn != "Fin de la mano":
-        print(f"Cartas en mesa:      {"".join(table_cards[:3])}[¿?][¿?]\n")
+        print(f"Cartas en mesa:      {"".join(community_cards[:3])}[¿?][¿?]\n")
 
     elif round_number == 1 and turn != "Fin de la mano":
-        print(f"Cartas en mesa:      {"".join(table_cards[:4])}[¿?]\n")
+        print(f"Cartas en mesa:      {"".join(community_cards[:4])}[¿?]\n")
 
     elif round_number in (2, 3) or turn == "Fin de la mano":
-        print(f"Cartas en mesa:      {"".join(table_cards)}\n")
+        print(f"Cartas en mesa:      {"".join(community_cards)}\n")
 
     # Imprime las cartas del jugador
     print(f"Tus cartas:                {"".join(user_cards)}")
@@ -201,10 +201,10 @@ def analyze_hand(hole_cards, community_cards):
     hand = sort_hand(hole_cards, community_cards, priority="suit")
 
 
-def machine_play(player_cards, table_cards, round_number):
+def machine_play(player_cards, community_cards, round_number):
     """Controla el turno de la máquina"""
 
-    show_cards(player_cards, table_cards, "Máquina", round_number)
+    show_cards(player_cards, community_cards, "Máquina", round_number)
     input("\nENTER para continuar...")
     system("cls")
 
@@ -215,10 +215,10 @@ def machine_play(player_cards, table_cards, round_number):
     return bet
 
 
-def player_play(player_cards, table_cards, round_number):
+def player_play(player_cards, community_cards, round_number):
     """Controla el turno del jugador"""
 
-    show_cards(player_cards, table_cards, "Jugador", round_number)
+    show_cards(player_cards, community_cards, "Jugador", round_number)
 
     if input("\n¿Desea seguir jugando? [Y/N]: ").lower() == "y":
         bet = True
@@ -229,7 +229,7 @@ def player_play(player_cards, table_cards, round_number):
     return bet
 
 
-def game(player_cards, machine_cards, table_cards):
+def game(player_cards, machine_cards, community_cards):
     """Ejecuta el juego"""
 
     system("cls")
@@ -238,27 +238,27 @@ def game(player_cards, machine_cards, table_cards):
     while round_number != 3:
 
         machine_bet = machine_play(
-            player_cards, table_cards, round_number)
+            player_cards, community_cards, round_number)
         if not machine_bet:
             break
 
         player_bet = player_play(
-            player_cards, table_cards, round_number)
+            player_cards, community_cards, round_number)
         if not player_bet:
             break
 
         round_number += 1
 
     if not machine_bet:
-        show_cards(player_cards, table_cards, "Fin de la mano", round_number=round_number,
+        show_cards(player_cards, community_cards, "Fin de la mano", round_number=round_number,
                    machine_cards=machine_cards)
         print("\nLa máquina se ha retirado. ¡Ganaste la mano!")
     elif not player_bet:
-        show_cards(player_cards, table_cards, "Fin de la mano", round_number=round_number,
+        show_cards(player_cards, community_cards, "Fin de la mano", round_number=round_number,
                    machine_cards=machine_cards)
         print("\nTe has retidado, perdiste la mano")
     elif round_number == 3:
-        show_cards(player_cards, table_cards, "Fin de la mano", round_number=round_number,
+        show_cards(player_cards, community_cards, "Fin de la mano", round_number=round_number,
                    machine_cards=machine_cards)
         print("\nPROXIMAMENTE...")  # Definir forma de calcular el ganador
 
@@ -267,12 +267,10 @@ def main():
     """Ejecuta el programa entero"""
 
     # Asigno cartas al jugador, a la máquina y a la mesa
-    # cambiar nombre de user_cards
-    # player_cards, machine_cards, table_cards = define_cards()
+    # player_cards, machine_cards, community_cards = define_cards()
 
     player_cards = ['[A♦]', '[J♥]']
     community_cards = ['[9♠]', '[7♣]', '[6♦]', '[5♠]', '[4♠]']
-
     # machine_cards = ["[2♣]", "[9♠]"]
 
     # Ordeno la mano del jugador
@@ -282,7 +280,7 @@ def main():
 
     # analyze_hand(player_cards, community_cards)
 
-    # game(player_cards, machine_cards, table_cards)
+    # game(player_cards, machine_cards, community_cards)
 
 
 if __name__ == "__main__":
