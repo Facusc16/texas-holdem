@@ -274,7 +274,7 @@ def analyze_hand(hole_cards, community_cards):
         else:
             return False
 
-    hand = hole_cards + community_cards
+    hand = hole_cards + community_cards  # Este puede ser que lo tenga que cambiar
 
     if straight_combination(hand):
 
@@ -299,11 +299,47 @@ def analyze_hand(hole_cards, community_cards):
 def machine_play(player_cards, community_cards, round_number):
     """Controla el turno de la máquina"""
 
+    def bet(combination):
+        bet = False
+        if round_number == 1:
+            if combination in ("escalera real", "escalera color", "poker", "full", "color",
+                               "escalera", "trio", "doble pareja"):
+                bet = True
+            elif combination == "pareja" and random.randint(1, 3) in (1, 2):
+                bet = True
+            elif combination == "carta alta" and random.randint(1, 4) in (1, 2):
+                bet = True
+        elif round_number == 2:
+            if combination in ("escalera real", "escalera color", "poker", "full", "color",
+                               "escalera"):
+                bet = True
+            elif combination in ("trio", "doble pareja") and random.randint(1, 3) in (1, 2):
+                bet = True
+            elif combination == "pareja" and random.randint(1, 4) in (1, 2):
+                bet = True
+            elif combination == "carta alta" and random.randint(1, 5) == 1:
+                bet = True
+        elif round_number == 3:
+            if combination in ("escalera real", "escalera color", "poker", "full"):
+                bet = True
+            elif combination in ("color", "escalera") and random.randint(1, 5) in (1, 2, 3, 4):
+                bet = True
+            elif combination in ("trio", "doble pareja") and random.randint(1, 5) in (1, 2, 3):
+                bet = True
+            elif combination == "pareja" and random.randint(1, 6) in (1, 2):
+                bet = True
+            elif combination == "carta alta" and random.randint(1, 6) == 1:
+                bet = True
+
+        return bet
+
+    combination = None  # Agregar
+
     show_cards(player_cards, community_cards, "Máquina", round_number)
     input("\nENTER para continuar...")
     system("cls")
 
-    bet = False
+    bet = bet(combination)
     if random.randint(1, 2) in (1, 2):  # Implementación temporal para testeo.
         bet = True
 
