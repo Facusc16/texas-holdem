@@ -2,6 +2,7 @@
 
 import random
 from os import system
+import re
 
 # Crear lista de maso de cartas
 value_deck = [[], [], [], [], [], [], [], [], [], [], [], [], []]
@@ -76,7 +77,7 @@ def sort_hand(hole_cards, community_cards, priority=None):
 
         if "straight" in priority:
 
-            i = 0
+            i = 0  # pylint: disable=redefined-outer-name
             loop = 0
             while i != 6 and loop <= 3:
                 if sorted_hand[i][1:2] == sorted_hand[i + 1][1:2]:
@@ -95,36 +96,44 @@ def sort_hand(hole_cards, community_cards, priority=None):
                 for group in value_deck:
                     if card in group:
 
-                        if index_0 == None:
+                        if index_0 is None:
                             index_0 = value_deck.index(group)
                             break
 
-                        elif index_1 == None:
+                        elif index_1 is None:
                             index_1 = value_deck.index(group)
                             break
 
-                        elif index_2 == None:
+                        elif index_2 is None:
                             index_2 = value_deck.index(group)
                             break
 
-                        elif index_3 == None:
+                        elif index_3 is None:
                             index_3 = value_deck.index(group)
                             break
 
-            if index_0 - index_1 != -1 and index_1 - index_2 == -1 and index_2 - index_3 == -1:  # OK
+            if index_0 - index_1 != -1 and index_1 - index_2 == -1 and index_2 - index_3 == -1:
                 sorted_hand.insert(-1, sorted_hand[0])
                 del sorted_hand[0]
 
-            elif (index_0 - index_1 == -1 or index_0 - index_1 != -1) and index_1 - index_2 != -1 and index_2 - index_3 == -1:
+            elif ((index_0 - index_1 == -1 or index_0 - index_1 != -1)
+                  and index_1 - index_2 != -1 and index_2 - index_3 == -1):
+
                 sorted_hand.extend([sorted_hand[0], sorted_hand[1]])
                 del sorted_hand[0:2]
 
-            elif (index_0 - index_1 == -1 or index_0 - index_1 != -1) and (index_1 - index_2 == -1 or index_1 - index_2 != -1) and index_2 - index_3 != -1:
-                sorted_hand.extend(
-                    [sorted_hand[0], sorted_hand[1], sorted_hand[2]])
+            elif ((index_0 - index_1 == -1 or index_0 - index_1 != -1)
+                  and (index_1 - index_2 == -1 or index_1 - index_2 != -1)
+                  and index_2 - index_3 != -1):
+
+                sorted_hand.extend([sorted_hand[0],
+                                    sorted_hand[1],
+                                    sorted_hand[2]])
                 del sorted_hand[0:3]
 
-            if "2" in sorted_hand[3] and "A" not in sorted_hand[4] and ("A" in sorted_hand[5] or "A" in sorted_hand[6]):
+            if ("2" in sorted_hand[3] and "A" not in sorted_hand[4]
+                    and ("A" in sorted_hand[5] or "A" in sorted_hand[6])):
+
                 for i, card in enumerate(sorted_hand):
                     if "A" in card:
                         sorted_hand.insert(-3, sorted_hand[i])
@@ -146,7 +155,7 @@ def sort_hand(hole_cards, community_cards, priority=None):
             elif "♣" in card:
                 sorted_hand[3].append(card)
 
-        for suit in sorted_hand:
+        for suit in sorted_hand:  # pylint: disable=redefined-outer-name
             suit.sort(key=deck.index)
 
         sorted_hand.sort(key=len, reverse=True)
@@ -160,7 +169,7 @@ def sort_hand(hole_cards, community_cards, priority=None):
 
         hand.sort(key=deck.index)
         for card in hand:
-            for value in sorted_hand:
+            for value in sorted_hand:  # pylint: disable=redefined-outer-name
                 if len(value) == 0 or card[1:2] in value[0]:
                     value.append(card)
                     break
@@ -189,16 +198,102 @@ def sort_hand(hole_cards, community_cards, priority=None):
 def analyze_hand(hole_cards, community_cards):
     """Devuelve las características de la mano"""
 
-    def straight(hand):  # Probar
-        ordered_hand = []
-        for card in hand[:5]:
-            for tier in value_deck:
-                if card[0] in tier:
-                    index = value_deck.index(tier)
-                    ordered_hand.append(index)
-        ordered_hand.sort(reverse=True)
+    def straight_combination(hand):
+        hand = sort_hand(hole_cards, community_cards,
+                         priority="highest.straight")
 
-    hand = sort_hand(hole_cards, community_cards, priority="suit")
+        straight = False
+
+        numbers = [int(n) if n.isdigit() else n for card in hand[:5]
+                   for n in re.findall(r"\[(\d{1,2}|[JQKA])[♥♦♠♣]\]", card)]
+
+        for i, n in enumerate(numbers):  # pylint: disable=redefined-outer-name
+            if isinstance(n, str):
+                if n == "A":
+                    numbers[i] = 14 if i == 0 else 1
+                elif n == "K":
+                    numbers[i] = 13
+                elif n == "Q":
+                    numbers[i] = 12
+                elif n == "J":
+                    numbers[i] = 11
+
+        if [numbers[i] - numbers[i + 1] for i in range(len(numbers) - 1)] == [1, 1, 1, 1]:
+            straight = True
+
+        return straight
+
+    def flush_combination(hand):
+        hand = sort_hand(hole_cards, community_cards,
+                         priority="suit")
+
+        flush = True
+
+        reference = None
+        for card in hand[:5]:
+            if reference is None:
+                reference = card[-2]
+            elif reference != card[-2]:
+                flush = False
+
+        return flush
+
+    def value_combination(hand):
+        hand = sort_hand(hole_cards, community_cards, priority="value")
+
+        group_1 = []
+        group_2 = []
+        group_3 = []
+
+        for card in hand[:5]:
+            if len(group_1) == 0:
+                group_1.append(card[1:2])
+
+            elif card[1:2] == group_1[0]:
+                group_1.append(card[1:2])
+
+            elif len(group_2) == 0:
+                group_2.append(card[1:2])
+
+            elif card[1:2] == group_2[0]:
+                group_2.append(card[1:2])
+
+            else:
+                group_3.append(card[1:2])
+
+        if len(group_1) == 4:
+            return "poker"
+        elif len(group_1) == 3 and len(group_2) == 2:
+            return "full"
+        elif len(group_1) == 3 and len(group_2) < 2:
+            return "trio"
+        elif len(group_1) == 2 and len(group_2) == 2:
+            return "doble pareja"
+        elif len(group_1) == 2 and len(group_2) < 2:
+            return "pareja"
+        else:
+            return False
+
+    hand = hole_cards + community_cards
+
+    if straight_combination(hand):
+
+        if flush_combination(hand):
+            if hand[0][1:2] == "A":
+                return "escalera real"
+            else:
+                return "escalera color"
+        else:
+            return "escalera"
+
+    elif flush_combination(hand):
+        return "color"
+
+    elif (combination := value_combination(hand)):
+        return combination
+
+    else:
+        return "carta alta"
 
 
 def machine_play(player_cards, community_cards, round_number):
@@ -269,16 +364,13 @@ def main():
     # Asigno cartas al jugador, a la máquina y a la mesa
     # player_cards, machine_cards, community_cards = define_cards()
 
-    player_cards = ['[A♦]', '[J♥]']
-    community_cards = ['[9♠]', '[7♣]', '[6♦]', '[5♠]', '[4♠]']
+    player_cards = ['[9♥]', '[7♥]']
+    community_cards = ['[8♥]', '[6♥]', '[5♥]', '[2♦]', '[J♣]']
+
     # machine_cards = ["[2♣]", "[9♠]"]
 
-    # Ordeno la mano del jugador
-    player_hand = sort_hand(player_cards, community_cards,
-                            priority="highest.straight")
-    print(player_hand)
-
-    # analyze_hand(player_cards, community_cards)
+    combination = analyze_hand(player_cards, community_cards)
+    print(combination)
 
     # game(player_cards, machine_cards, community_cards)
 
