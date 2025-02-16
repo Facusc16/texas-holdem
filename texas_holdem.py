@@ -202,9 +202,11 @@ def sort_hand(hand, priority=None):
     return sorted_hand
 
 
-# En las que devuelve con slicing, devuelve una lista. Y juntas todo el código de la carta
 def analyze_hand(hand):
     """Devuelve las características de la mano"""
+
+    def get_values(hand):
+        return [n for card in hand for n in re.findall(r"\[(\d{1,2}|[JQKA])", card)]
 
     def straight_combination(hand):
         hand = sort_hand(hand, priority="highest.straight")
@@ -264,27 +266,29 @@ def analyze_hand(hand):
             else:
                 group_3.append(card[1:2])
 
-        hand_values = [n for card in hand for n in re.findall(
-            r"\[(\d{1,2}|[JQKA])", card)]
+        hand_values = get_values(hand)
         hand_values = hand_values[:5]
 
         if len(group_1) == 4:
-            return f"poker {hand_values[-1]}"
+            return f"poker {hand_values[0]}{hand_values[-1]}"
+
         elif len(group_1) == 3 and len(group_2) == 2:
             return f"full{hand_values[0]}{hand_values[3]}"
+
         elif len(group_1) == 3 and len(group_2) < 2:
-            return f"trio{hand_values[0]} {hand_values[3:]}"
+            return f"trio {hand_values[0]}" + "".join(hand_values[3:])
+
         elif len(group_1) == 2 and len(group_2) == 2:
-            return f"doble pareja{hand_values[0]}{hand_values[2]} {hand_values[-1]}"
+            return f"doble pareja {hand_values[0]}{hand_values[2]}{hand_values[-1]}"
+
         elif len(group_1) == 2 and len(group_2) < 2:
-            return f"pareja{hand_values[0]} {hand_values[2:]}"
+            return f"pareja {hand_values[0]}" + "".join(hand_values[2:])
         else:
             return False
 
     if (straight := straight_combination(hand)):
 
         if (flush := flush_combination(hand, straight=True)):
-            # Esto no va a estar ordenado, así que puede ser escalera real y que no lo devuelva como tal
             if straight[-1] == "A":
                 return straight[:8] + " real"
             else:
@@ -299,8 +303,7 @@ def analyze_hand(hand):
         return combination
 
     else:
-        hand_values = [n for card in hand for n in re.findall(
-            r"\[(\d{1,2}|[JQKA])", card)]
+        hand_values = get_values(hand)
 
         return f"carta alta {hand_values[:5]}"
 
@@ -352,9 +355,9 @@ def machine_play(machine_cards, community_cards, player_cards, round_number):
     elif round_number == 1:
         hand = hand[:6]
 
-    print(analyze_hand(hand))
+    print(analyze_hand(hand))  # Borrar
 
-    if bet(analyze_hand(hand)):
+    if bet(analyze_hand(hand)):  # Revisar
         return True
     else:
         return False
@@ -416,8 +419,8 @@ def main():
 
     # game(player_cards, machine_cards, community_cards)
 
-    player_cards = ['[A♠]', '[7♣]']
-    community_cards = ['[10♦]', '[5♠]', '[3♣]', '[2♦]', '[9♠]']
+    player_cards = ['[10♠]', '[3♣]']
+    community_cards = ['[10♣]', '[7♦]', '[2♠]', '[9♠]', '[K♥]']
 
     # machine_cards = ['[A♥]', '[A♦]']
 
