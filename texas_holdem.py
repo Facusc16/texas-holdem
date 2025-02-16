@@ -68,7 +68,7 @@ def show_cards(user_cards, community_cards, turn, round_number=None, machine_car
     print(f"Tus cartas:                {"".join(user_cards)}")
 
 
-def sort_hand(hole_cards, community_cards, priority=None):
+def sort_hand(hand, priority=None):
     """Devuelve la mano ordenada"""
 
     def highest(hand, priority):
@@ -79,7 +79,7 @@ def sort_hand(hole_cards, community_cards, priority=None):
 
             i = 0  # pylint: disable=redefined-outer-name
             loop = 0
-            while i != 6 and loop <= 3:
+            while i != len(sorted_hand) - 1 and loop <= 3:
                 if sorted_hand[i][1:2] == sorted_hand[i + 1][1:2]:
                     sorted_hand.append(sorted_hand[i + 1])
                     sorted_hand.pop(i + 1)
@@ -176,11 +176,18 @@ def sort_hand(hole_cards, community_cards, priority=None):
 
         sorted_hand.sort(key=len, reverse=True)
 
+        if (len(sorted_hand[0]) > 3 and len(sorted_hand[1]) == 2):
+            sorted_hand = [sorted_hand[0]] + [sum(sorted_hand[1:], [])]
+            sorted_hand[1].sort(key=deck.index)
+
+        elif len(sorted_hand[0]) == 2 and len(sorted_hand[1]) == 2 and len(sorted_hand[2]) == 2:
+            sorted_hand = sorted_hand[:2] + [sum(sorted_hand[2:], [])]
+            sorted_hand[2].sort(key=deck.index)
+
         sorted_hand = sum(sorted_hand, [])
 
         return sorted_hand
 
-    hand = hole_cards + community_cards
     sorted_hand = []
 
     if "highest" in priority:
@@ -195,14 +202,12 @@ def sort_hand(hole_cards, community_cards, priority=None):
     return sorted_hand
 
 
-def analyze_hand(hole_cards, community_cards):
+# En las que devuelve con slicing, devuelve una lista. Y juntas todo el código de la carta
+def analyze_hand(hand):
     """Devuelve las características de la mano"""
 
     def straight_combination(hand):
-        hand = sort_hand(hole_cards, community_cards,
-                         priority="highest.straight")
-
-        straight = False
+        hand = sort_hand(hand, priority="highest.straight")
 
         numbers = [int(n) if n.isdigit() else n for card in hand[:5]
                    for n in re.findall(r"\[(\d{1,2}|[JQKA])[♥♦♠♣]\]", card)]
@@ -219,27 +224,25 @@ def analyze_hand(hole_cards, community_cards):
                     numbers[i] = 11
 
         if [numbers[i] - numbers[i + 1] for i in range(len(numbers) - 1)] == [1, 1, 1, 1]:
-            straight = True
+            return f"escalera {hand[0][1:2]}"
 
-        return straight
-
-    def flush_combination(hand):
-        hand = sort_hand(hole_cards, community_cards,
-                         priority="suit")
-
-        flush = True
+    def flush_combination(hand, straight=False):
+        if straight:
+            hand = sort_hand(hand, priority="highest.straight")
+        else:
+            hand = sort_hand(hand, priority="suit")
 
         reference = None
         for card in hand[:5]:
             if reference is None:
                 reference = card[-2]
             elif reference != card[-2]:
-                flush = False
+                return False
 
-        return flush
+        return f"color {hand[0][1:2]}{hand[1][1:2]}{hand[2][1:2]}{hand[3][1:2]}{hand[4][1:2]}"
 
     def value_combination(hand):
-        hand = sort_hand(hole_cards, community_cards, priority="value")
+        hand = sort_hand(hand, priority="value")
 
         group_1 = []
         group_2 = []
@@ -261,47 +264,53 @@ def analyze_hand(hole_cards, community_cards):
             else:
                 group_3.append(card[1:2])
 
+        hand_values = [n for card in hand for n in re.findall(
+            r"\[(\d{1,2}|[JQKA])", card)]
+        hand_values = hand_values[:5]
+
         if len(group_1) == 4:
-            return "poker"
+            return f"poker {hand_values[-1]}"
         elif len(group_1) == 3 and len(group_2) == 2:
-            return "full"
+            return f"full{hand_values[0]}{hand_values[3]}"
         elif len(group_1) == 3 and len(group_2) < 2:
-            return "trio"
+            return f"trio{hand_values[0]} {hand_values[3:]}"
         elif len(group_1) == 2 and len(group_2) == 2:
-            return "doble pareja"
+            return f"doble pareja{hand_values[0]}{hand_values[2]} {hand_values[-1]}"
         elif len(group_1) == 2 and len(group_2) < 2:
-            return "pareja"
+            return f"pareja{hand_values[0]} {hand_values[2:]}"
         else:
             return False
 
-    hand = hole_cards + community_cards  # Este puede ser que lo tenga que cambiar
+    if (straight := straight_combination(hand)):
 
-    if straight_combination(hand):
-
-        if flush_combination(hand):
-            if hand[0][1:2] == "A":
-                return "escalera real"
+        if (flush := flush_combination(hand, straight=True)):
+            # Esto no va a estar ordenado, así que puede ser escalera real y que no lo devuelva como tal
+            if straight[-1] == "A":
+                return straight[:8] + " real"
             else:
-                return "escalera color"
+                return straight[:8] + " " + flush[:7]
         else:
-            return "escalera"
+            return straight
 
-    elif flush_combination(hand):
-        return "color"
+    elif (flush := flush_combination(hand)):
+        return flush
 
     elif (combination := value_combination(hand)):
         return combination
 
     else:
-        return "carta alta"
+        hand_values = [n for card in hand for n in re.findall(
+            r"\[(\d{1,2}|[JQKA])", card)]
+
+        return f"carta alta {hand_values[:5]}"
 
 
-def machine_play(player_cards, community_cards, round_number):
+def machine_play(machine_cards, community_cards, player_cards, round_number):
     """Controla el turno de la máquina"""
 
     def bet(combination):
         bet = False
-        if round_number == 1:
+        if round_number == 0:
             if combination in ("escalera real", "escalera color", "poker", "full", "color",
                                "escalera", "trio", "doble pareja"):
                 bet = True
@@ -309,7 +318,7 @@ def machine_play(player_cards, community_cards, round_number):
                 bet = True
             elif combination == "carta alta" and random.randint(1, 4) in (1, 2):
                 bet = True
-        elif round_number == 2:
+        elif round_number == 1:
             if combination in ("escalera real", "escalera color", "poker", "full", "color",
                                "escalera"):
                 bet = True
@@ -319,12 +328,12 @@ def machine_play(player_cards, community_cards, round_number):
                 bet = True
             elif combination == "carta alta" and random.randint(1, 5) == 1:
                 bet = True
-        elif round_number == 3:
+        elif round_number == 2:
             if combination in ("escalera real", "escalera color", "poker", "full"):
                 bet = True
             elif combination in ("color", "escalera") and random.randint(1, 5) in (1, 2, 3, 4):
                 bet = True
-            elif combination in ("trio", "doble pareja") and random.randint(1, 5) in (1, 2, 3):
+            elif combination in ("trio", "doble pareja") and random.randint(1, 6) in (1, 2, 3):
                 bet = True
             elif combination == "pareja" and random.randint(1, 6) in (1, 2):
                 bet = True
@@ -333,17 +342,22 @@ def machine_play(player_cards, community_cards, round_number):
 
         return bet
 
-    combination = None  # Agregar
-
     show_cards(player_cards, community_cards, "Máquina", round_number)
     input("\nENTER para continuar...")
     system("cls")
 
-    bet = bet(combination)
-    if random.randint(1, 2) in (1, 2):  # Implementación temporal para testeo.
-        bet = True
+    hand = machine_cards + community_cards
+    if round_number == 0:
+        hand = hand[:5]
+    elif round_number == 1:
+        hand = hand[:6]
 
-    return bet
+    print(analyze_hand(hand))
+
+    if bet(analyze_hand(hand)):
+        return True
+    else:
+        return False
 
 
 def player_play(player_cards, community_cards, round_number):
@@ -369,7 +383,7 @@ def game(player_cards, machine_cards, community_cards):
     while round_number != 3:
 
         machine_bet = machine_play(
-            player_cards, community_cards, round_number)
+            machine_cards, community_cards, player_cards, round_number)
         if not machine_bet:
             break
 
@@ -400,15 +414,17 @@ def main():
     # Asigno cartas al jugador, a la máquina y a la mesa
     # player_cards, machine_cards, community_cards = define_cards()
 
-    player_cards = ['[9♥]', '[7♥]']
-    community_cards = ['[8♥]', '[6♥]', '[5♥]', '[2♦]', '[J♣]']
+    # game(player_cards, machine_cards, community_cards)
 
-    # machine_cards = ["[2♣]", "[9♠]"]
+    player_cards = ['[A♠]', '[7♣]']
+    community_cards = ['[10♦]', '[5♠]', '[3♣]', '[2♦]', '[9♠]']
 
-    combination = analyze_hand(player_cards, community_cards)
-    print(combination)
+    # machine_cards = ['[A♥]', '[A♦]']
 
     # game(player_cards, machine_cards, community_cards)
+
+    combination = analyze_hand(player_cards + community_cards)
+    print(combination)
 
 
 if __name__ == "__main__":
