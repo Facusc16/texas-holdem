@@ -4,13 +4,17 @@ import random
 from os import system
 import re
 
-# Crear lista de maso de cartas
+# Masos de cartas
 value_deck = [[], [], [], [], [], [], [], [], [], [], [], [], []]
 for i, value in enumerate(("A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2")):
     for suit in "♥♦♠♣":
         value_deck[i].append(f"[{value}{suit}]")
 
 deck = sum(value_deck, [])
+
+# Combinaciones de cartas
+combination = ["escalera_real", "escalera_color", "poker", "full", "color", "escalera", "trio",
+               "doble_pareja", "pareja", "carta_alta"]
 
 
 def define_cards():
@@ -206,7 +210,8 @@ def analyze_hand(hand):
     """Devuelve las características de la mano"""
 
     def get_values(hand):
-        return [n for card in hand for n in re.findall(r"\[(\d{1,2}|[JQKA])", card)]
+        return [n.replace("10", "1") for card in hand
+                for n in re.findall(r"\[(\d{1,2}|[JQKA])", card)]
 
     def straight_combination(hand):
         hand = sort_hand(hand, priority="highest.straight")
@@ -241,7 +246,9 @@ def analyze_hand(hand):
             elif reference != card[-2]:
                 return False
 
-        return f"color {hand[0][1:2]}{hand[1][1:2]}{hand[2][1:2]}{hand[3][1:2]}{hand[4][1:2]}"
+        flush_value = get_values(hand)
+
+        return "color " + "".join(flush_value[:5])
 
     def value_combination(hand):
         hand = sort_hand(hand, priority="value")
@@ -273,45 +280,75 @@ def analyze_hand(hand):
             return f"poker {hand_values[0]}{hand_values[-1]}"
 
         elif len(group_1) == 3 and len(group_2) == 2:
-            return f"full{hand_values[0]}{hand_values[3]}"
+            return f"full {hand_values[0]}{hand_values[3]}"
 
         elif len(group_1) == 3 and len(group_2) < 2:
             return f"trio {hand_values[0]}" + "".join(hand_values[3:])
 
         elif len(group_1) == 2 and len(group_2) == 2:
-            return f"doble pareja {hand_values[0]}{hand_values[2]}{hand_values[-1]}"
+            return f"doble_pareja {hand_values[0]}{hand_values[2]}{hand_values[-1]}"
 
         elif len(group_1) == 2 and len(group_2) < 2:
             return f"pareja {hand_values[0]}" + "".join(hand_values[2:])
-        else:
-            return False
 
     if (straight := straight_combination(hand)):
 
         if (flush := flush_combination(hand, straight=True)):
             if straight[-1] == "A":
-                return straight[:8] + " real"
+                return straight[:8] + "_real A"
             else:
-                return straight[:8] + " " + flush[:7]
+                return straight[:8] + "_" + flush[:7]
         else:
             return straight
 
     elif (flush := flush_combination(hand)):
         return flush
 
-    elif (combination := value_combination(hand)):
-        return combination
+    elif (value := value_combination(hand)):  # pylint: disable=redefined-outer-name
+        return value
 
     else:
         hand_values = get_values(hand)
 
-        return f"carta alta {hand_values[:5]}"
+        return "carta_alta " + "".join(hand_values[:5])
+
+
+def find_index(lista, string):
+    "Devuelve el índice de la carta en value_deck"
+
+    for i, card in enumerate(lista):  # pylint: disable=redefined-outer-name
+        for value in card:  # pylint: disable=redefined-outer-name
+            if string in value:
+                return i
+
+
+def winning_card(machine_bet, player_bet, value_deck, indices):  # pylint: disable=redefined-outer-name
+    "Encuentra la carta ganadora de la mano, o define empate"
+
+    for i in indices:  # pylint: disable=redefined-outer-name
+
+        tie_break_machine = find_index(value_deck, machine_bet[i])
+        tie_break_player = find_index(value_deck, player_bet[i])
+
+        if tie_break_machine < tie_break_player:
+            return f"""Gana la máquina con {machine_bet[:machine_bet.find(" ")].replace('_', ' ')}
+                    con un {tie_break_machine} como kicker N°{i}
+                    sobre {player_bet[:player_bet.find(" ")].replace('_', ' ')} con un
+                    {tie_break_player} como kicker N°{i}"""
+
+        elif tie_break_player < tie_break_machine:
+            return f"""Ganaste la partida con {player_bet[:player_bet.find(" ")].replace('_', ' ')}
+                    con un {tie_break_player} como kicker N°{i}
+                    sobre {machine_bet[:machine_bet.find(" ")].replace('_', ' ')} con un
+                    {tie_break_machine} como kicker N°{i}"""
+
+    return "Ambas manos son iguales. El resultado es empate"
 
 
 def machine_play(machine_cards, community_cards, player_cards, round_number):
     """Controla el turno de la máquina"""
 
-    def bet(combination):
+    def bet(combination):  # pylint: disable=redefined-outer-name
         bet = False
         if round_number == 0:
             if combination in ("escalera real", "escalera color", "poker", "full", "color",
@@ -355,12 +392,8 @@ def machine_play(machine_cards, community_cards, player_cards, round_number):
     elif round_number == 1:
         hand = hand[:6]
 
-    print(analyze_hand(hand))  # Borrar
-
-    if bet(analyze_hand(hand)):  # Revisar
-        return True
-    else:
-        return False
+    if bet((combination := analyze_hand(hand))):  # pylint: disable=redefined-outer-name
+        return combination  # pylint: disable=redefined-outer-name
 
 
 def player_play(player_cards, community_cards, round_number):
@@ -369,12 +402,15 @@ def player_play(player_cards, community_cards, round_number):
     show_cards(player_cards, community_cards, "Jugador", round_number)
 
     if input("\n¿Desea seguir jugando? [Y/N]: ").lower() == "y":
-        bet = True
-    else:
-        bet = False
-    system("cls")
 
-    return bet
+        hand = player_cards + community_cards
+        if round_number == 0:
+            hand = hand[:5]
+        elif round_number == 1:
+            hand = hand[:6]
+
+        system("cls")
+        return analyze_hand(hand)
 
 
 def game(player_cards, machine_cards, community_cards):
@@ -383,6 +419,7 @@ def game(player_cards, machine_cards, community_cards):
     system("cls")
     round_number = 0
 
+    player_bet = None
     while round_number != 3:
 
         machine_bet = machine_play(
@@ -401,33 +438,64 @@ def game(player_cards, machine_cards, community_cards):
         show_cards(player_cards, community_cards, "Fin de la mano", round_number=round_number,
                    machine_cards=machine_cards)
         print("\nLa máquina se ha retirado. ¡Ganaste la mano!")
+
     elif not player_bet:
         show_cards(player_cards, community_cards, "Fin de la mano", round_number=round_number,
                    machine_cards=machine_cards)
         print("\nTe has retidado, perdiste la mano")
+
     elif round_number == 3:
         show_cards(player_cards, community_cards, "Fin de la mano", round_number=round_number,
                    machine_cards=machine_cards)
-        print("\nPROXIMAMENTE...")  # Definir forma de calcular el ganador
+
+        if (combination.index(machine_bet[:machine_bet.find(" ")]) >
+                combination.index(player_bet[:player_bet.find(" ")])):
+            print(f"""Gana la máquina con {machine_bet[:machine_bet.find(" ")].replace("_", " ")}
+                  sobre {player_bet[:player_bet.find(" ")].replace("_", " ")}""")
+
+        elif (combination.index(player_bet[:player_bet.find(" ")]) >
+              combination.index(machine_bet[:machine_bet.find(" ")])):
+            print(f"""Ganaste la partida con {player_bet[:player_bet.find(" ")].replace("_", " ")}
+                   sobre {machine_bet[:machine_bet.fin(" ")].replace("_", " ")}""")
+
+        else:
+            if (machine_bet[:machine_bet.find(" ")] in
+                    ("escalera_real", "escalera_color", "escalera")):
+                print(winning_card(machine_bet, player_bet,
+                                   value_deck, [-1]))
+
+            elif machine_bet[:machine_bet.find(" ")] in ("color", "carta_alta"):
+                print(winning_card(machine_bet, player_bet,
+                      value_deck, [-5, -4, -3, -2, -1]))
+
+            elif machine_bet[:machine_bet.find(" ")] == "poker":
+                print(winning_card(machine_bet,
+                      player_bet, value_deck, [6, -1]))
+
+            elif machine_bet[:machine_bet.find(" ")] == "full":
+                print(winning_card(machine_bet,
+                      player_bet, value_deck, [5, -1]))
+
+            elif machine_bet[:machine_bet.find(" ")] == "trio":
+                print(winning_card(machine_bet,
+                      player_bet, value_deck, [5, 6, 7]))
+
+            elif machine_bet[:machine_bet.find(" ")] == "doble_pareja":
+                print(winning_card(machine_bet,
+                      player_bet, value_deck, [-3, -2, -1]))
+
+            elif machine_bet[:machine_bet.find(" ")] == "pareja":
+                print(winning_card(machine_bet,
+                      player_bet, value_deck, [-4, -3, -2, -1]))
 
 
 def main():
     """Ejecuta el programa entero"""
 
     # Asigno cartas al jugador, a la máquina y a la mesa
-    # player_cards, machine_cards, community_cards = define_cards()
+    player_cards, machine_cards, community_cards = define_cards()
 
-    # game(player_cards, machine_cards, community_cards)
-
-    player_cards = ['[10♠]', '[3♣]']
-    community_cards = ['[10♣]', '[7♦]', '[2♠]', '[9♠]', '[K♥]']
-
-    # machine_cards = ['[A♥]', '[A♦]']
-
-    # game(player_cards, machine_cards, community_cards)
-
-    combination = analyze_hand(player_cards + community_cards)
-    print(combination)
+    game(player_cards, machine_cards, community_cards)
 
 
 if __name__ == "__main__":
