@@ -349,35 +349,36 @@ def machine_play(machine_cards, community_cards, player_cards, round_number):
     """Controla el turno de la máquina"""
 
     def bet(combination):  # pylint: disable=redefined-outer-name
+        combination = combination[:combination.find(" ")]
         bet = False
         if round_number == 0:
-            if combination in ("escalera real", "escalera color", "poker", "full", "color",
-                               "escalera", "trio", "doble pareja"):
+            if combination in ("escalera_real", "escalera_color", "poker", "full", "color",
+                               "escalera", "trio", "doble_pareja"):
                 bet = True
             elif combination == "pareja" and random.randint(1, 3) in (1, 2):
                 bet = True
-            elif combination == "carta alta" and random.randint(1, 4) in (1, 2):
+            elif combination == "carta_alta" and random.randint(1, 4) in (1, 2):
                 bet = True
         elif round_number == 1:
-            if combination in ("escalera real", "escalera color", "poker", "full", "color",
+            if combination in ("escalera_real", "escalera_color", "poker", "full", "color",
                                "escalera"):
                 bet = True
-            elif combination in ("trio", "doble pareja") and random.randint(1, 3) in (1, 2):
+            elif combination in ("trio", "doble_pareja") and random.randint(1, 3) in (1, 2):
                 bet = True
             elif combination == "pareja" and random.randint(1, 4) in (1, 2):
                 bet = True
-            elif combination == "carta alta" and random.randint(1, 5) == 1:
+            elif combination == "carta_alta" and random.randint(1, 5) == 1:
                 bet = True
         elif round_number == 2:
-            if combination in ("escalera real", "escalera color", "poker", "full"):
+            if combination in ("escalera_real", "escalera_color", "poker", "full"):
                 bet = True
             elif combination in ("color", "escalera") and random.randint(1, 5) in (1, 2, 3, 4):
                 bet = True
-            elif combination in ("trio", "doble pareja") and random.randint(1, 6) in (1, 2, 3):
+            elif combination in ("trio", "doble_pareja") and random.randint(1, 6) in (1, 2, 3):
                 bet = True
             elif combination == "pareja" and random.randint(1, 6) in (1, 2):
                 bet = True
-            elif combination == "carta alta" and random.randint(1, 6) == 1:
+            elif combination == "carta_alta" and random.randint(1, 6) == 1:
                 bet = True
 
         return bet
