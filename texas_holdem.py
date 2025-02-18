@@ -135,13 +135,15 @@ def sort_hand(hand, priority=None):
                                     sorted_hand[2]])
                 del sorted_hand[0:3]
 
-            if ("2" in sorted_hand[3] and "A" not in sorted_hand[4]
-                    and ("A" in sorted_hand[5] or "A" in sorted_hand[6])):
+            if ("5" in sorted_hand[0] and "A" not in sorted_hand[4]
+                    # Indice 6 no está en manos menores a 7 cartas. Probar con "A" in sorted_hand, por ahí con find_index()
+                    and ("A" in [card[1:2] for card in sorted_hand])):
 
                 for i, card in enumerate(sorted_hand):
                     if "A" in card:
-                        sorted_hand.insert(-3, sorted_hand[i])
-                        sorted_hand.pop(i + 1)
+                        add = card
+                        sorted_hand.pop(sorted_hand.index(card))
+                        sorted_hand.insert(4, add)
                         break
 
         return sorted_hand
@@ -331,16 +333,18 @@ def winning_card(machine_bet, player_bet, value_deck, indices):  # pylint: disab
         tie_break_player = find_index(value_deck, player_bet[i])
 
         if tie_break_machine < tie_break_player:
-            return f"""Gana la máquina con {machine_bet[:machine_bet.find(" ")].replace('_', ' ')}
-                    con un {tie_break_machine} como kicker N°{i}
-                    sobre {player_bet[:player_bet.find(" ")].replace('_', ' ')} con un
-                    {tie_break_player} como kicker N°{i}"""
+            return ("\n" +
+                    f"Gana la máquina con {machine_bet[:machine_bet.find(" ")].replace('_', ' ')}" +
+                    f" con un {re.findall(r"\b\d{1,2}\b", value_deck[tie_break_machine][0])[0]} como" +
+                    f" kicker sobre {player_bet[:player_bet.find(" ")].replace('_', ' ')} con un" +
+                    f" {re.findall(r"\b\d{1,2}\b", value_deck[tie_break_player][0])[0]} como kicker.")
 
         elif tie_break_player < tie_break_machine:
-            return f"""Ganaste la partida con {player_bet[:player_bet.find(" ")].replace('_', ' ')}
-                    con un {tie_break_player} como kicker N°{i}
-                    sobre {machine_bet[:machine_bet.find(" ")].replace('_', ' ')} con un
-                    {tie_break_machine} como kicker N°{i}"""
+            return (f"\nGanaste la mano con {player_bet[:player_bet.find(" ")].replace('_', ' ')}" +
+                    f" con un" + f"{re.findall(r"\b\d{1,2}\b", value_deck[tie_break_player][0])[0]}" + "como" +
+                    f" kicker sobre {machine_bet[:machine_bet.find(" ")].replace('_', ' ')} con" +
+                    f" un {re.findall(r"\b\d{1,2}\b", value_deck[tie_break_machine][0])[0]}" +
+                    " como kicker")
 
     return "Ambas manos son iguales. El resultado es empate"
 
@@ -393,7 +397,8 @@ def machine_play(machine_cards, community_cards, player_cards, round_number):
     elif round_number == 1:
         hand = hand[:6]
 
-    if bet((combination := analyze_hand(hand))):  # pylint: disable=redefined-outer-name
+    # Implementación temporal para probar el programa, volver a ponet bet()
+    if (combination := analyze_hand(hand)):  # pylint: disable=redefined-outer-name
         return combination  # pylint: disable=redefined-outer-name
 
 
@@ -412,6 +417,8 @@ def player_play(player_cards, community_cards, round_number):
 
         system("cls")
         return analyze_hand(hand)
+
+    system("cls")
 
 
 def game(player_cards, machine_cards, community_cards):
@@ -449,15 +456,15 @@ def game(player_cards, machine_cards, community_cards):
         show_cards(player_cards, community_cards, "Fin de la mano", round_number=round_number,
                    machine_cards=machine_cards)
 
-        if (combination.index(machine_bet[:machine_bet.find(" ")]) >
+        if (combination.index(machine_bet[:machine_bet.find(" ")]) <
                 combination.index(player_bet[:player_bet.find(" ")])):
-            print(f"""Gana la máquina con {machine_bet[:machine_bet.find(" ")].replace("_", " ")}
-                  sobre {player_bet[:player_bet.find(" ")].replace("_", " ")}""")
+            print(f"\nGana la máquina con {machine_bet[:machine_bet.find(" ")].replace("_", " ")}" +
+                  f" sobre {player_bet[:player_bet.find(" ")].replace("_", " ")}")
 
-        elif (combination.index(player_bet[:player_bet.find(" ")]) >
+        elif (combination.index(player_bet[:player_bet.find(" ")]) <
               combination.index(machine_bet[:machine_bet.find(" ")])):
-            print(f"""Ganaste la partida con {player_bet[:player_bet.find(" ")].replace("_", " ")}
-                   sobre {machine_bet[:machine_bet.fin(" ")].replace("_", " ")}""")
+            print(f"\nGanaste la mano con {player_bet[:player_bet.find(" ")].replace("_", " ")}" +
+                  f" sobre {machine_bet[:machine_bet.find(" ")].replace("_", " ")}")
 
         else:
             if (machine_bet[:machine_bet.find(" ")] in
@@ -494,7 +501,11 @@ def main():
     """Ejecuta el programa entero"""
 
     # Asigno cartas al jugador, a la máquina y a la mesa
-    player_cards, machine_cards, community_cards = define_cards()
+    # player_cards, machine_cards, community_cards = define_cards()
+
+    player_cards = ["[7♦]", "[10♦]"]
+    community_cards = ["[2♦]", "[9♥]", "[8♣]", "[7♣]", "[A♥]"]
+    machine_cards = ["[8♦]", "[3♥]"]
 
     game(player_cards, machine_cards, community_cards)
 
