@@ -136,7 +136,6 @@ def sort_hand(hand, priority=None):
                 del sorted_hand[0:3]
 
             if ("5" in sorted_hand[0] and "A" not in sorted_hand[4]
-                    # Indice 6 no está en manos menores a 7 cartas. Probar con "A" in sorted_hand, por ahí con find_index()
                     and ("A" in [card[1:2] for card in sorted_hand])):
 
                 for i, card in enumerate(sorted_hand):
@@ -215,8 +214,9 @@ def analyze_hand(hand):
         return [n.replace("10", "1") for card in hand
                 for n in re.findall(r"\[(\d{1,2}|[JQKA])", card)]
 
-    def straight_combination(hand):
-        hand = sort_hand(hand, priority="highest.straight")
+    def straight_combination(hand, flush=False):
+        if flush == False:
+            hand = sort_hand(hand, priority="highest.straight")
 
         numbers = [int(n) if n.isdigit() else n for card in hand[:5]
                    for n in re.findall(r"\[(\d{1,2}|[JQKA])[♥♦♠♣]\]", card)]
@@ -235,11 +235,8 @@ def analyze_hand(hand):
         if [numbers[i] - numbers[i + 1] for i in range(len(numbers) - 1)] == [1, 1, 1, 1]:
             return f"escalera {hand[0][1:2]}"
 
-    def flush_combination(hand, straight=False):
-        if straight:
-            hand = sort_hand(hand, priority="highest.straight")
-        else:
-            hand = sort_hand(hand, priority="suit")
+    def flush_combination(hand):
+        hand = sort_hand(hand, priority="suit")
 
         reference = None
         for card in hand[:5]:
@@ -293,18 +290,18 @@ def analyze_hand(hand):
         elif len(group_1) == 2 and len(group_2) < 2:
             return f"pareja {hand_values[0]}" + "".join(hand_values[2:])
 
-    if (straight := straight_combination(hand)):
+    if (flush := flush_combination(hand)):
 
-        if (flush := flush_combination(hand, straight=True)):
+        if (straight := straight_combination(sort_hand(hand, priority="suit"), flush=True)):
             if straight[-1] == "A":
                 return straight[:8] + "_real A"
             else:
                 return straight[:8] + "_" + flush[:7]
         else:
-            return straight
+            return flush
 
-    elif (flush := flush_combination(hand)):
-        return flush
+    elif (straight := straight_combination(hand)):
+        return straight
 
     elif (value := value_combination(hand)):  # pylint: disable=redefined-outer-name
         return value
@@ -353,7 +350,7 @@ def winning_card(machine_bet, player_bet, value_deck, indices, code):  # pylint:
                     "_", " ") + "-" + player_bet[indices[1]]
                 salida = f"\nGana la máquina con {machine_hand} sobre {player_hand}"
 
-                if i != indices[0] and code == "3a":
+                if code == "3a" and i == indices[2]:
                     salida += f"\nKicker: {machine_bet[i]} sobre {player_bet[i]}"
 
             elif code == "4":
@@ -389,7 +386,7 @@ def winning_card(machine_bet, player_bet, value_deck, indices, code):  # pylint:
                     "_", " ") + "-" + player_bet[indices[1]]
                 salida = f"\nGanaste la mano con {player_hand} sobre {machine_hand}"
 
-                if i != indices[0] and code == "3a":
+                if code == "3a" and i == indices[2]:
                     salida += f"\nKicker: {player_bet[i]} sobre {machine_bet[i]}"
 
             elif code == "4":
@@ -404,9 +401,10 @@ def winning_card(machine_bet, player_bet, value_deck, indices, code):  # pylint:
 
             return salida
 
-    return "Ambas manos son iguales. El resultado es empate"
+    return f"\nEmpate de {machine_bet[:machine_bet.find(" ")].replace("_", " ")}"
 
 
+# Implementación temporal de testeo
 def machine_play(machine_cards, community_cards, player_cards, round_number):
     """Controla el turno de la máquina"""
 
@@ -567,7 +565,7 @@ def main():
         player_cards, machine_cards, community_cards = define_cards()
 
         game(player_cards, machine_cards, community_cards)
-        input("\nENTER para continuar...")
+        input("ENTER para continuar...")
 
 
 if __name__ == "__main__":
