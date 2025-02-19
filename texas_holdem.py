@@ -324,7 +324,7 @@ def find_index(lista, string):
                 return i
 
 
-def winning_card(machine_bet, player_bet, value_deck, indices):  # pylint: disable=redefined-outer-name
+def winning_card(machine_bet, player_bet, value_deck, indices, code):  # pylint: disable=redefined-outer-name
     "Encuentra la carta ganadora de la mano, o define empate"
 
     for i in indices:  # pylint: disable=redefined-outer-name
@@ -333,18 +333,76 @@ def winning_card(machine_bet, player_bet, value_deck, indices):  # pylint: disab
         tie_break_player = find_index(value_deck, player_bet[i])
 
         if tie_break_machine < tie_break_player:
-            return ("\n" +
-                    f"Gana la máquina con {machine_bet[:machine_bet.find(" ")].replace('_', ' ')}" +
-                    f" con un {re.findall(r"\b\d{1,2}\b", value_deck[tie_break_machine][0])[0]} como" +
-                    f" kicker sobre {player_bet[:player_bet.find(" ")].replace('_', ' ')} con un" +
-                    f" {re.findall(r"\b\d{1,2}\b", value_deck[tie_break_player][0])[0]} como kicker.")
+            if code == "1":
+                machine_hand = machine_bet.replace("_", " ")
+                player_hand = player_bet.replace("_", " ")
+                salida = f"\nGana la máquina con {machine_hand} sobre {player_hand}"
+
+            elif code == "2":
+                machine_hand = machine_bet[:indices[0] + 1].replace("_", " ")
+                player_hand = player_bet[:indices[0] + 1].replace("_", " ")
+                salida = f"\nGana la máquina con {machine_hand} sobre {player_hand}"
+
+                if i != indices[0]:
+                    salida += f"\nKicker: {machine_bet[i]} sobre {player_bet[i]}"
+
+            elif "3" in code:
+                machine_hand = machine_bet[:indices[0] + 1].replace(
+                    "_", " ") + "-" + machine_bet[indices[1]]
+                player_hand = player_bet[:indices[0] + 1].replace(
+                    "_", " ") + "-" + player_bet[indices[1]]
+                salida = f"\nGana la máquina con {machine_hand} sobre {player_hand}"
+
+                if i != indices[0] and code == "3a":
+                    salida += f"\nKicker: {machine_bet[i]} sobre {player_bet[i]}"
+
+            elif code == "4":
+                machine_hand = machine_bet[:5]
+                player_hand = player_bet[:5]
+
+                salida = f"\nGana la máquina con {machine_hand} sobre {player_hand}"
+                salida += f"\nCarta alta: {machine_bet[i]} sobre {player_bet[i]}"
+
+            if "1" in salida:
+                salida = salida.replace("1", "10")
+
+            return salida
 
         elif tie_break_player < tie_break_machine:
-            return (f"\nGanaste la mano con {player_bet[:player_bet.find(" ")].replace('_', ' ')}" +
-                    f" con un" + f"{re.findall(r"\b\d{1,2}\b", value_deck[tie_break_player][0])[0]}" + "como" +
-                    f" kicker sobre {machine_bet[:machine_bet.find(" ")].replace('_', ' ')} con" +
-                    f" un {re.findall(r"\b\d{1,2}\b", value_deck[tie_break_machine][0])[0]}" +
-                    " como kicker")
+            if code == "1":
+                machine_hand = machine_bet.replace("_", " ")
+                player_hand = player_bet.replace("_", " ")
+                salida = f"\nGanaste la mano con {player_hand} sobre {machine_hand}"
+
+            elif code == "2":
+                machine_hand = machine_bet[:indices[0] + 1].replace("_", " ")
+                player_hand = player_bet[:indices[0] + 1].replace("_", " ")
+                salida = f"\nGanaste la mano con {player_hand} sobre {machine_hand}"
+
+                if i != indices[0]:
+                    salida += f"\nKicker: {player_bet[i]} sobre {machine_bet[i]}"
+
+            elif "3" in code:
+                machine_hand = machine_bet[:indices[0] + 1].replace(
+                    "_", " ") + "-" + machine_bet[indices[1]]
+                player_hand = player_bet[:indices[0] + 1].replace(
+                    "_", " ") + "-" + player_bet[indices[1]]
+                salida = f"\nGanaste la mano con {player_hand} sobre {machine_hand}"
+
+                if i != indices[0] and code == "3a":
+                    salida += f"\nKicker: {player_bet[i]} sobre {machine_bet[i]}"
+
+            elif code == "4":
+                machine_hand = machine_bet[:5]
+                player_hand = player_bet[:5]
+
+                salida = f"\nGanaste la mano con {player_hand} sobre {machine_hand}"
+                salida += f"\nCarta alta: {player_bet[i]} sobre {machine_bet[i]}"
+
+            if "1" in salida:
+                salida = salida.replace("1", "10")
+
+            return salida
 
     return "Ambas manos son iguales. El resultado es empate"
 
@@ -388,7 +446,7 @@ def machine_play(machine_cards, community_cards, player_cards, round_number):
         return bet
 
     show_cards(player_cards, community_cards, "Máquina", round_number)
-    input("\nENTER para continuar...")
+    # input("\nENTER para continuar...")
     system("cls")
 
     hand = machine_cards + community_cards
@@ -402,23 +460,23 @@ def machine_play(machine_cards, community_cards, player_cards, round_number):
         return combination  # pylint: disable=redefined-outer-name
 
 
-def player_play(player_cards, community_cards, round_number):
+def player_play(player_cards, community_cards, round_number):  # Sacar comentarios
     """Controla el turno del jugador"""
 
     show_cards(player_cards, community_cards, "Jugador", round_number)
 
-    if input("\n¿Desea seguir jugando? [Y/N]: ").lower() == "y":
+    # if input("\n¿Desea seguir jugando? [Y/N]: ").lower() == "y":
 
-        hand = player_cards + community_cards
-        if round_number == 0:
-            hand = hand[:5]
-        elif round_number == 1:
-            hand = hand[:6]
-
-        system("cls")
-        return analyze_hand(hand)
+    hand = player_cards + community_cards
+    if round_number == 0:
+        hand = hand[:5]
+    elif round_number == 1:
+        hand = hand[:6]
 
     system("cls")
+    return analyze_hand(hand)
+
+    # system("cls")
 
 
 def game(player_cards, machine_cards, community_cards):
@@ -470,44 +528,46 @@ def game(player_cards, machine_cards, community_cards):
             if (machine_bet[:machine_bet.find(" ")] in
                     ("escalera_real", "escalera_color", "escalera")):
                 print(winning_card(machine_bet, player_bet,
-                                   value_deck, [-1]))
+                                   value_deck, [-1], "1"))
 
-            elif machine_bet[:machine_bet.find(" ")] in ("color", "carta_alta"):
+            elif machine_bet[:machine_bet.find(" ")] == "color":
                 print(winning_card(machine_bet, player_bet,
-                      value_deck, [-5, -4, -3, -2, -1]))
+                      value_deck, [-5, -4, -3, -2, -1], "4"))
 
             elif machine_bet[:machine_bet.find(" ")] == "poker":
                 print(winning_card(machine_bet,
-                      player_bet, value_deck, [6, -1]))
+                      player_bet, value_deck, [6, -1], "2"))
 
             elif machine_bet[:machine_bet.find(" ")] == "full":
                 print(winning_card(machine_bet,
-                      player_bet, value_deck, [5, -1]))
+                      player_bet, value_deck, [5, -1], "3"))
 
             elif machine_bet[:machine_bet.find(" ")] == "trio":
                 print(winning_card(machine_bet,
-                      player_bet, value_deck, [5, 6, 7]))
+                      player_bet, value_deck, [5, 6, 7], "2"))
 
             elif machine_bet[:machine_bet.find(" ")] == "doble_pareja":
                 print(winning_card(machine_bet,
-                      player_bet, value_deck, [-3, -2, -1]))
+                      player_bet, value_deck, [-3, -2, -1], "3a"))
 
             elif machine_bet[:machine_bet.find(" ")] == "pareja":
                 print(winning_card(machine_bet,
-                      player_bet, value_deck, [-4, -3, -2, -1]))
+                      player_bet, value_deck, [-4, -3, -2, -1], "2"))
+
+            elif machine_bet[:machine_bet.find(" ")] == "carta_alta":
+                print(winning_card(machine_bet, player_bet,
+                      value_deck, [-5, -4, -3, -2, -1], "2"))
 
 
 def main():
     """Ejecuta el programa entero"""
 
     # Asigno cartas al jugador, a la máquina y a la mesa
-    # player_cards, machine_cards, community_cards = define_cards()
+    while True:
+        player_cards, machine_cards, community_cards = define_cards()
 
-    player_cards = ["[7♦]", "[10♦]"]
-    community_cards = ["[2♦]", "[9♥]", "[8♣]", "[7♣]", "[A♥]"]
-    machine_cards = ["[8♦]", "[3♥]"]
-
-    game(player_cards, machine_cards, community_cards)
+        game(player_cards, machine_cards, community_cards)
+        input("\nENTER para continuar...")
 
 
 if __name__ == "__main__":
