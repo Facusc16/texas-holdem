@@ -20,8 +20,8 @@ combination = ["escalera_real", "escalera_color", "poker", "full", "color", "esc
 def define_cards():
     """Asigna cartas al jugador, a la máquina y a la mesa"""
     shuffled_deck = random.sample(deck, len(deck))
-
     chosen_cards = []
+
     user_cards = []
     machine_cards = []
     table_cards = []
@@ -45,7 +45,7 @@ def define_cards():
 
 
 def show_cards(user_cards, community_cards, turn, round_number=None, machine_cards=None):
-    """Muestras las cartas, según las situación unas u otras"""
+    """Imprime en pantalla las cartas en juego"""
 
     print("♥ ♣ TEXAS HOLDEM ♦ ♠\n")
 
@@ -561,11 +561,9 @@ def main():
     """Ejecuta el programa entero"""
 
     # Asigno cartas al jugador, a la máquina y a la mesa
-    while True:
-        player_cards, machine_cards, community_cards = define_cards()
+    player_cards, machine_cards, community_cards = define_cards()
 
-        game(player_cards, machine_cards, community_cards)
-        input("ENTER para continuar...")
+    game(player_cards, machine_cards, community_cards)
 
 
 if __name__ == "__main__":
