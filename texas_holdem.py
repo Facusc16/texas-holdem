@@ -195,12 +195,15 @@ def sort_hand(hand, priority=None):
 
     sorted_hand = []
 
+    # Ordena la mano por valor más alto, o intenta armar una escalera
     if "highest" in priority:
         sorted_hand = highest(hand, priority)
 
+    # Ordena la mano por palo
     elif priority == "suit":
         sorted_hand = suit(hand)
 
+    # Ordena la mano por valor
     elif priority == "value":
         sorted_hand = value(hand)
 
@@ -290,8 +293,10 @@ def analyze_hand(hand):
         elif len(group_1) == 2 and len(group_2) < 2:
             return f"pareja {hand_values[0]}" + "".join(hand_values[2:])
 
+    # Verifica si la mano forma color
     if (flush := flush_combination(hand)):
 
+        # Verifica si la mano forma escalera real, escalera color, o solo color
         if (straight := straight_combination(sort_hand(hand, priority="suit"), flush=True)):
             if straight[-1] == "A":
                 return straight[:8] + "_real A"
@@ -300,12 +305,15 @@ def analyze_hand(hand):
         else:
             return flush
 
+    # Verifica si la mano forma escalera
     elif (straight := straight_combination(hand)):
         return straight
 
+    # Verifica si la mano forma poker, full, trio, doble pareja o pareja
     elif (value := value_combination(hand)):  # pylint: disable=redefined-outer-name
         return value
 
+    # Determina que la mano solo tiene carta alta
     else:
         hand_values = get_values(hand)
 
@@ -404,9 +412,8 @@ def winning_card(machine_bet, player_bet, value_deck, indices, code):  # pylint:
     return f"\nEmpate de {machine_bet[:machine_bet.find(" ")].replace("_", " ")}"
 
 
-# Implementación temporal de testeo
 def machine_play(machine_cards, community_cards, player_cards, round_number):
-    """Controla el turno de la máquina"""
+    """Turno de la máquina"""
 
     def bet(combination):  # pylint: disable=redefined-outer-name
         combination = combination[:combination.find(" ")]
@@ -444,7 +451,7 @@ def machine_play(machine_cards, community_cards, player_cards, round_number):
         return bet
 
     show_cards(player_cards, community_cards, "Máquina", round_number)
-    # input("\nENTER para continuar...")
+    input("\nENTER para continuar...")
     system("cls")
 
     hand = machine_cards + community_cards
@@ -453,28 +460,27 @@ def machine_play(machine_cards, community_cards, player_cards, round_number):
     elif round_number == 1:
         hand = hand[:6]
 
-    # Implementación temporal para probar el programa, volver a ponet bet()
-    if (combination := analyze_hand(hand)):  # pylint: disable=redefined-outer-name
+    if bet((combination := analyze_hand(hand))):  # pylint: disable=redefined-outer-name
         return combination  # pylint: disable=redefined-outer-name
 
 
 def player_play(player_cards, community_cards, round_number):  # Sacar comentarios
-    """Controla el turno del jugador"""
+    """Turno del jugador"""
 
     show_cards(player_cards, community_cards, "Jugador", round_number)
 
-    # if input("\n¿Desea seguir jugando? [Y/N]: ").lower() == "y":
+    if input("\n¿Desea seguir jugando? [Y/N]: ").lower() == "y":
 
-    hand = player_cards + community_cards
-    if round_number == 0:
-        hand = hand[:5]
-    elif round_number == 1:
-        hand = hand[:6]
+        hand = player_cards + community_cards
+        if round_number == 0:
+            hand = hand[:5]
+        elif round_number == 1:
+            hand = hand[:6]
+
+        system("cls")
+        return analyze_hand(hand)
 
     system("cls")
-    return analyze_hand(hand)
-
-    # system("cls")
 
 
 def game(player_cards, machine_cards, community_cards):
@@ -483,6 +489,7 @@ def game(player_cards, machine_cards, community_cards):
     system("cls")
     round_number = 0
 
+    # Empieza la partida
     player_bet = None
     while round_number != 3:
 
@@ -498,6 +505,7 @@ def game(player_cards, machine_cards, community_cards):
 
         round_number += 1
 
+    # Verifico si alguno de los jugadores decidió abandonar la mano
     if not machine_bet:
         show_cards(player_cards, community_cards, "Fin de la mano", round_number=round_number,
                    machine_cards=machine_cards)
@@ -512,6 +520,7 @@ def game(player_cards, machine_cards, community_cards):
         show_cards(player_cards, community_cards, "Fin de la mano", round_number=round_number,
                    machine_cards=machine_cards)
 
+        # Verifico si alguno de los jugadores tiene una mano más alta que la otra
         if (combination.index(machine_bet[:machine_bet.find(" ")]) <
                 combination.index(player_bet[:player_bet.find(" ")])):
             print(f"\nGana la máquina con {machine_bet[:machine_bet.find(" ")].replace("_", " ")}" +
@@ -522,6 +531,7 @@ def game(player_cards, machine_cards, community_cards):
             print(f"\nGanaste la mano con {player_bet[:player_bet.find(" ")].replace("_", " ")}" +
                   f" sobre {machine_bet[:machine_bet.find(" ")].replace("_", " ")}")
 
+        # Verifico que combinación es más alta, o tiene el kicker más alto, o si empatan.
         else:
             if (machine_bet[:machine_bet.find(" ")] in
                     ("escalera_real", "escalera_color", "escalera")):
